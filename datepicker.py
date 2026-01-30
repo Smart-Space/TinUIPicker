@@ -1,4 +1,4 @@
-from tkinter import Tk, Toplevel
+from tkinter import Tk
 import calendar
 from datetime import datetime
 
@@ -27,7 +27,7 @@ pickerdark = {
 
 class TinUIDatePicker:
     def __init__(self, tinui, pos, font=("微软雅黑", 10), command=None, 
-                 year_range=(2000, 2030), anchor='nw', **kwargs):
+                 year_range=(2000, 2030), now=datetime.today(), anchor='nw', **kwargs):
         self.self = tinui  # 这里的 self 是 BasicTinUI 实例
         self.pos = pos
         self.font = font
@@ -52,7 +52,6 @@ class TinUIDatePicker:
             "buttononbg": kwargs.get("buttononbg", "#f5f5f5"),
         }
 
-        now = datetime.now()
         self.res_year, self.res_month, self.res_day = str(now.year), str(now.month).zfill(2), str(now.day).zfill(2)
         
         # 1. 绘制触发器 (完全复刻源码的 polygon 逻辑)
@@ -68,7 +67,7 @@ class TinUIDatePicker:
         bbox = self.self.bbox(txtest)
         self.self.delete(txtest)
         
-        tw, th = bbox[2]-bbox[0] + 20, bbox[3]-bbox[1] + 10
+        tw, th = bbox[2]-bbox[0] + 10, bbox[3]-bbox[1] + 10
         x, y = self.pos
         
         # 源码风格的圆角边框 (通过 polygon 和 width=9 模拟)
@@ -113,6 +112,7 @@ class TinUIDatePicker:
             # 记录并标记初始选中
             is_sel = (i == box.newres)
             if is_sel:
+                self.sel_backs[col_type] = back_id
                 box.itemconfig(back_id, fill=self.cfg['onbg'])
                 box.itemconfig(text_id, fill=self.cfg['onfg'])
 
@@ -138,8 +138,13 @@ class TinUIDatePicker:
         """处理点击选中"""
         for tid, data in box.choices.items():
             data[3] = (tid == t)
-            fill_bg = self.cfg['onbg'] if data[3] else self.cfg['bg']
-            fill_fg = self.cfg['onfg'] if data[3] else self.cfg['fg']
+            if data[3]:
+                fill_bg = self.cfg['onbg']
+                fill_fg = self.cfg['onfg']
+                self.sel_backs[col_type] = data[2]
+            else:
+                fill_bg = self.cfg['bg']
+                fill_fg = self.cfg['fg']
             box.itemconfig(data[2], fill=fill_bg)
             box.itemconfig(data[1], fill=fill_fg)
         
@@ -161,17 +166,22 @@ class TinUIDatePicker:
         width, height = 230, 260
         # 调用 TinUI 私有方法创建顶层窗口
         self.picker, self.bar = self.self._BasicTinUI__ui_toplevel(width, height, "#01FF11", lambda e: self.picker.withdraw())
+        self.picker.bind("<Escape>", lambda e: self.picker.withdraw())
+        self.picker.bind("<FocusOut>", lambda e: self.picker.withdraw())
         
         # 绘制背景
         self.bar._BasicTinUI__ui_polygon(((13, 13), (width - 13, height - 11)), fill=self.cfg['bg'], outline=self.cfg['bg'], width=17)
         self.bar.lower(self.bar._BasicTinUI__ui_polygon(((12, 12), (width - 12, height - 10)), fill=self.cfg['outline'], outline=self.cfg['outline'], width=17))
+
+        # 选中的背景元素
+        self.sel_backs = [None, None, None]
 
         self.pickerbars = []
         self.col_widths = [80, 60, 60]
         curr_x = 8
         for i in range(3):
             # 每一列都是一个 BasicTinUI 画布
-            pb = self.self.__class__(self.picker, bg=self.cfg['bg'], highlightthickness=0)
+            pb = BasicTinUI(self.picker, bg=self.cfg['bg'], highlightthickness=0)
             pb.place(x=curr_x, y=10, width=self.col_widths[i], height=height - 60)
             pb.newres = [self.res_year, self.res_month, self.res_day][i]
             pb.choices = {}
@@ -185,19 +195,38 @@ class TinUIDatePicker:
         self._loaddata(self.pickerbars[0], years, 80, 0)
         self._loaddata(self.pickerbars[1], months, 60, 1)
 
+        # 屏幕最大尺寸
+        self.maxx = self.self.winfo_screenwidth()
+        self.maxy = self.self.winfo_screenheight()
+
     def show(self, event):
         """只负责定位和显示"""
-        # 1. 根据当前年月刷新“日”列表 (处理闰年)
+        # 根据当前年月刷新“日”列表 (处理闰年)
         self._update_days()
+
+        # 选中项居中
+        for i in range(3):
+            bbox = self.pickerbars[i].bbox(self.sel_backs[i])
+            centery = (bbox[1] + bbox[3]) / 2
+            view_centery = self.pickerbars[i].winfo_height() / 2
+            scroll_region = self.pickerbars[i].cget("scrollregion").split()
+            scroll_y1, scroll_y2 = int(scroll_region[1]), int(scroll_region[3])
+            total_height = scroll_y2 - scroll_y1
+            self.pickerbars[i].yview_moveto((centery - view_centery)/total_height)
         
-        # 2. 计算显示位置 (复刻源码 show)
+        # 计算显示位置 (复刻源码 show)
         bbox = self.self.bbox(self.out_line)
         sx, sy = event.x_root - (event.x - bbox[0]), event.y_root - (event.y - bbox[3])
+        if sx+240 > self.maxx:
+            sx = self.maxx-240
+        if sy+275 > self.maxy:
+            sy = self.maxy-275
         
-        # 3. 动画显示
+        # 动画显示
         self.picker.geometry(f"240x275+{int(sx)-3}+{int(sy)}")
         self.picker.attributes("-alpha", 0)
         self.picker.deiconify()
+        self.picker.focus_set()
         for i in range(1, 11):
             self.picker.after(i * 20, lambda a=i/10: self.picker.attributes("-alpha", a))
 
@@ -235,18 +264,18 @@ class TinUIDatePicker:
 
 
 if __name__ == "__main__":
-    from tinui import ExpandPanel, VerticalPanel, HorizonPanel
+    from tinui import ExpandPanel, HorizonPanel
     root = Tk()
     root.geometry('400x400')
 
     ui = BasicTinUI(root)
     ui.pack(fill='both', expand=True)
-    tdp = TinUIDatePicker(ui, (10,10), command=print, anchor='center', **pickerlight)
+    tdp = TinUIDatePicker(ui, (10,10), font=("Segoe UI", 12), now=datetime(2026, 2, 19), command=print, anchor='center', **pickerlight)
 
     rp = ExpandPanel(ui)
     hp = HorizonPanel(ui)
     rp.set_child(hp)
-    hp.add_child(tdp.uid)
+    hp.add_child(tdp.uid, 150)
 
     ep = ExpandPanel(ui)
     hp.add_child(ep, weight=1)

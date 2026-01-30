@@ -13,7 +13,7 @@
 ```python
 TinUIDatePicker(
     tinui, pos, font=("微软雅黑", 10), command=None, 
-    year_range=(2000, 2030), **kwargs
+    year_range=(2000, 2030), now=datetime.today(), **kwargs
 )
 
 # 默认样式表
@@ -33,6 +33,8 @@ self.cfg = {
     "buttononbg": kwargs.get("buttononbg", "#f5f5f5"),
 }
 ```
+
+> `command`接收一个形如`2026-01-30`的字符串参数。
 
 ---
 
