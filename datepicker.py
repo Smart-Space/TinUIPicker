@@ -27,12 +27,13 @@ pickerdark = {
 
 class TinUIDatePicker:
     def __init__(self, tinui, pos, font=("微软雅黑", 10), command=None, 
-                 year_range=(2000, 2030), **kwargs):
+                 year_range=(2000, 2030), anchor='nw', **kwargs):
         self.self = tinui  # 这里的 self 是 BasicTinUI 实例
         self.pos = pos
         self.font = font
         self.command = command
         self.year_range = year_range
+        self.anchor = anchor
         
         # 继承源码中的默认配色
         self.cfg = {
@@ -84,7 +85,7 @@ class TinUIDatePicker:
         )
         
         # 绑定事件
-        uid = f"datepicker-{id(self)}"
+        uid = f"datepicker-{self.main_text}"
         self.uid = TinUIString(uid)
         for i in (self.out_line, self.back, self.main_text):
             self.self.addtag_withtag(uid, i)
@@ -92,6 +93,11 @@ class TinUIDatePicker:
         self.self.tag_bind(uid, "<Enter>", lambda e: self.self.itemconfig(self.back, fill=self.cfg['activebg'], outline=self.cfg['activebg']))
         self.self.tag_bind(uid, "<Leave>", lambda e: self.self.itemconfig(self.back, fill=self.cfg['bg'], outline=self.cfg['bg']))
         self.self.tag_bind(uid, "<Button-1>", self.show)
+
+        self.self._BasicTinUI__auto_anchor(uid, self.pos, self.anchor)
+        self.uid.layout = lambda x1, y1, x2, y2, expand=False: self.self._BasicTinUI__auto_layout(
+            uid, (x1, y1, x2, y2), self.anchor
+        )
 
     def _loaddata(self, box, items, mw, col_type):
         """刷新指定列的内容"""
@@ -229,11 +235,25 @@ class TinUIDatePicker:
 
 
 if __name__ == "__main__":
+    from tinui import ExpandPanel, VerticalPanel, HorizonPanel
     root = Tk()
     root.geometry('400x400')
 
     ui = BasicTinUI(root)
     ui.pack(fill='both', expand=True)
-    tdp = TinUIDatePicker(ui, (10,10), command=print, **pickerdark)
+    tdp = TinUIDatePicker(ui, (10,10), command=print, anchor='center', **pickerlight)
+
+    rp = ExpandPanel(ui)
+    hp = HorizonPanel(ui)
+    rp.set_child(hp)
+    hp.add_child(tdp.uid)
+
+    ep = ExpandPanel(ui)
+    hp.add_child(ep, weight=1)
+    # ep.set_child(tdp.uid)
+
+    def update(e):
+        rp.update_layout(5,5,e.width-5,e.height-5)
+    ui.bind('<Configure>',update)
 
     root.mainloop()

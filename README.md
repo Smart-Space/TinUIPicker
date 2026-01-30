@@ -39,3 +39,41 @@ self.cfg = {
 ## 样式表
 
 TinUIPicker提供了`pickerlight`和`pickerdark`两种配色样式表，均来自于TinUI明暗配色。
+
+---
+
+## 面板布局
+
+通过`TinUIDatePicker.uid`获取TinUIDatePicker的控件标识符。
+
+面板布局行为与`picker`一致。
+
+---
+
+## 使用示例
+
+```python
+if __name__ == "__main__":
+    from tinui import ExpandPanel, VerticalPanel, HorizonPanel
+    root = Tk()
+    root.geometry('400x400')
+
+    ui = BasicTinUI(root)
+    ui.pack(fill='both', expand=True)
+    tdp = TinUIDatePicker(ui, (10,10), command=print, anchor='center', **pickerlight)
+
+    rp = ExpandPanel(ui)
+    hp = HorizonPanel(ui)
+    rp.set_child(hp)
+
+    ep = ExpandPanel(ui)
+    hp.add_child(ep, weight=1)
+    ep.set_child(tdp.uid)
+
+    def update(e):
+        rp.update_layout(5,5,e.width-5,e.height-5)
+    ui.bind('<Configure>',update)
+
+    root.mainloop()
+```
+
