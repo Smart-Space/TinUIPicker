@@ -1,0 +1,41 @@
+# TinUIPicker
+
+为[TinUI](https://github.com/Smart-Space/TinUI)提供滚动选择器功能控件，相比于原版`picker`，TinUIPicker套件加入了日期选择和时间选择的功能。
+
+---
+
+## TinUIDatePicker
+
+> [!important]
+>
+> TinUIDatePicker原始框架代码由**Gemini3**根据TinUI的`picker`源码修改而来，之后我才进行了交互优化和样式优化，AI代码部分未完全审查。
+
+```python
+TinUIDatePicker(
+    tinui, pos, font=("微软雅黑", 10), command=None, 
+    year_range=(2000, 2030), **kwargs
+)
+
+# 默认样式表
+self.cfg = {
+    "fg": kwargs.get("fg", "#1b1b1b"),
+    "bg": kwargs.get("bg", "#fbfbfb"),
+    "outline": kwargs.get("outline", "#ececec"),
+    "activefg": kwargs.get("activefg", "#1b1b1b"),
+    "activebg": kwargs.get("activebg", "#f6f6f6"),
+    "onbg": kwargs.get("onbg", "#3748d9"),
+    "onfg": kwargs.get("onfg", "#eaecfb"),
+    "buttonfg": kwargs.get("buttonfg", "#1a1a1a"),
+    "buttonbg": kwargs.get("buttonbg", "#f9f9f9"),
+    "buttonactivefg": kwargs.get("buttonactivefg", "#1a1a1a"),
+    "buttonactivebg": kwargs.get("buttonactivebg", "#f3f3f3"),
+    "buttononfg": kwargs.get("buttononfg", "#5d5d5d"),
+    "buttononbg": kwargs.get("buttononbg", "#f5f5f5"),
+}
+```
+
+---
+
+## 样式表
+
+TinUIPicker提供了`pickerlight`和`pickerdark`两种配色样式表，均来自于TinUI明暗配色。
