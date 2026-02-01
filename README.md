@@ -36,6 +36,29 @@ self.cfg = {
 
 > `command`接收一个形如`2026-01-30`的字符串参数。
 
+**set_date(year:int=None, month:int=None, day:int=None)**
+
+设置年-月-日，若为`None`则不变。
+
+---
+
+## TinUITimePicker
+
+```python
+TinUITimePicker(
+    tinui, pos, font=("微软雅黑", 10), is_24h=True, now = datetime.now(),
+    command=None, anchor='nw', **kwargs
+)
+```
+
+默认样式同`TinUIDatePicker`
+
+> `command`接收一个形如`16:00:09`或者`PM 04:00:09`的字符串参数。
+
+**set_time(hour:int=None, minute:int=None, second:int=None)**
+
+设置时-分-秒，若为`None`则不变。
+
 ---
 
 ## 样式表
@@ -59,6 +82,7 @@ from tkinter import Tk
 from tinui import ExpandPanel, VerticalPanel, HorizonPanel, BasicTinUI
 
 from tinuipicker.datepicker import TinUIDatePicker
+from tinuipicker import pickerlight
 
 root = Tk()
 root.geometry('400x400')

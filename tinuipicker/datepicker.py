@@ -1,28 +1,9 @@
-from tkinter import Tk
+from itertools import islice
 import calendar
 from datetime import datetime
 
 from tinui import BasicTinUI
 from tinui.TinUI import TinUIString
-
-
-pickerlight = {
-    'fg':'#1b1b1b','bg':'#fbfbfb',
-    'outline':'#ececec','activefg':'#1b1b1b',
-    'activebg':'#f6f6f6','onfg':'#eaecfb','onbg':'#0067C0',
-    'buttonfg':'#1a1a1a','buttonbg':'#fbfbfb',
-    'buttonactivefg':'#1a1a1a','buttonactivebg':'#f0f0f0',
-    'buttononfg':'#1a1a1a','buttononbg':'#f3f3f3',
-}
-
-pickerdark = {
-    'fg':'#cfcfcf','bg':'#2d2d2d','outline':'#3c3c3c',
-    'activefg':'#ffffff','activebg':'#323232',
-    'onfg':'#000000','onbg':'#4CC2FF',
-    'buttonfg':'#ffffff','buttonbg':'#2d2d2d',
-    'buttonactivefg':'#ffffff','buttonactivebg':'#383838',
-    'buttononfg':'#ffffff','buttononbg':'#343434',
-}
 
 
 class TinUIDatePicker:
@@ -69,8 +50,7 @@ class TinUIDatePicker:
         
         tw, th = bbox[2]-bbox[0] + 10, bbox[3]-bbox[1] + 10
         x, y = self.pos
-        
-        # 源码风格的圆角边框 (通过 polygon 和 width=9 模拟)
+
         self.out_line = self.self.create_polygon(
             (x, y, x+tw, y, x+tw, y+th, x, y+th), 
             fill=self.cfg['outline'], outline=self.cfg['outline'], width=9
@@ -104,7 +84,7 @@ class TinUIDatePicker:
         box.choices = {}
         y_ptr = 5
         for i in items:
-            text_id = box.create_text((self.col_widths[col_type]/2, y_ptr + 2), text=i, fill=self.cfg['fg'], font=self.font, anchor="n")
+            text_id = box.create_text((mw/2, y_ptr + 2), text=i, fill=self.cfg['fg'], font=self.font, anchor="n")
             bbox = box.bbox(text_id)
             back_id = box.create_rectangle((3, bbox[1] - 4, 3 + mw, bbox[3] + 4), width=0, fill=self.cfg['bg'])
             box.tkraise(text_id)
@@ -177,16 +157,16 @@ class TinUIDatePicker:
         self.sel_backs = [None, None, None]
 
         self.pickerbars = []
-        self.col_widths = [80, 60, 60]
+        col_widths = [80, 60, 60]
         curr_x = 8
         for i in range(3):
             # 每一列都是一个 BasicTinUI 画布
             pb = BasicTinUI(self.picker, bg=self.cfg['bg'], highlightthickness=0)
-            pb.place(x=curr_x, y=10, width=self.col_widths[i], height=height - 60)
+            pb.place(x=curr_x, y=10, width=col_widths[i], height=height - 60)
             pb.newres = [self.res_year, self.res_month, self.res_day][i]
             pb.choices = {}
             self.pickerbars.append(pb)
-            curr_x += self.col_widths[i] + 5
+            curr_x += col_widths[i] + 5
 
         self._build_buttons(self.bar, width, height)
         # 初始化静态数据：年、月
@@ -261,16 +241,33 @@ class TinUIDatePicker:
         if self.command:
             self.command(full_date)
         self.picker.withdraw()
+    
+    def set_date(self, year:int=None, month:int=None, day:int=None):
+        if year:
+            index = year - self.year_range[0]
+            _, t, _, _ = next(islice(self.pickerbars[0].choices.values(), index, index+1))
+            self._pick_sel_it(self.pickerbars[0], t, 0)
+        if month:
+            index = month - 1
+            _, t, _, _ = next(islice(self.pickerbars[1].choices.values(), index, index+1))
+            self._pick_sel_it(self.pickerbars[1], t, 1)
+        if day:
+            index = day - 1
+            _, t, _, _ = next(islice(self.pickerbars[2].choices.values(), index, index+1))
+            self._pick_sel_it(self.pickerbars[2], t, 2)
+        self._confirm()
 
 
 if __name__ == "__main__":
+    from tkinter import Tk
     from tinui import ExpandPanel, HorizonPanel
     root = Tk()
     root.geometry('400x400')
 
     ui = BasicTinUI(root)
     ui.pack(fill='both', expand=True)
-    tdp = TinUIDatePicker(ui, (10,10), font=("Segoe UI", 12), now=datetime(2026, 2, 19), command=print, anchor='center', **pickerlight)
+    tdp = TinUIDatePicker(ui, (10,10), font=("Segoe UI", 12), now=datetime(2026, 2, 19), command=print, anchor='center')
+    tdp.set_date(2016, 10)
 
     rp = ExpandPanel(ui)
     hp = HorizonPanel(ui)
