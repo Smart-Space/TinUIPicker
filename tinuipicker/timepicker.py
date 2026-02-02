@@ -6,11 +6,12 @@ from tinui.TinUI import TinUIString
 
 
 class TinUITimePicker:
-    def __init__(self, tinui, pos, font=("微软雅黑", 10), is_24h=True, now = datetime.now(), command=None, anchor='nw', **kwargs):
+    def __init__(self, tinui, pos, font=("微软雅黑", 10), is_24h=True, show_sec=True, now = datetime.now(), command=None, anchor='nw', **kwargs):
         self.self = tinui
         self.pos = pos
         self.font = font
         self.is_24h = is_24h
+        self.show_sec = show_sec
         self.command = command
         self.anchor = anchor
         
@@ -52,7 +53,10 @@ class TinUITimePicker:
 
     def _get_time_str(self):
         """生成显示的格式化字符串"""
-        base = f"{self.res_hour}:{self.res_minute}:{self.res_second}"
+        if self.show_sec:
+            base = f"{self.res_hour} : {self.res_minute} : {self.res_second}"
+        else:
+            base = f"{self.res_hour} : {self.res_minute}"
         return f"{self.res_ampm} {base}".strip()
 
     def _build_trigger(self):
@@ -86,6 +90,8 @@ class TinUITimePicker:
         """初始化 Toplevel 弹出层及其内部选择列"""
         # 根据制式动态计算宽度
         col_widths = [50, 60, 60, 60] if not self.is_24h else [60, 60, 60]
+        if not self.show_sec:
+            col_widths.pop()
         width = sum(col_widths) + (len(col_widths) * 3) + 12
         height = 260
         
@@ -109,7 +115,7 @@ class TinUITimePicker:
             data_sets.append([str(h).zfill(2) for h in range(0, 24)]) # 24小时
             
         data_sets.append([str(m).zfill(2) for m in range(0, 60)]) # 分
-        data_sets.append([str(s).zfill(2) for s in range(0, 60)]) # 秒
+        if self.show_sec: data_sets.append([str(s).zfill(2) for s in range(0, 60)]) # 秒
 
         self.pickerbars = []
         curr_x = 8
@@ -137,7 +143,7 @@ class TinUITimePicker:
         for i in items:
             text_id = box.create_text((mw/2, y_ptr + 2), text=i, fill=self.cfg['fg'], font=self.font, anchor="n")
             bbox = box.bbox(text_id)
-            back_id = box.create_rectangle((3, bbox[1] - 4, 3 + mw - 6, bbox[3] + 4), width=0, fill=self.cfg['bg'])
+            back_id = box.create_rectangle((3, bbox[1] - 4, mw+3, bbox[3] + 4), width=0, fill=self.cfg['bg'])
             box.tkraise(text_id)
             
             is_sel = (i == box.newres)
@@ -224,9 +230,11 @@ class TinUITimePicker:
         """保存结果并更新界面"""
         vals = [pb.newres for pb in self.pickerbars]
         if self.is_24h:
-            self.res_hour, self.res_minute, self.res_second = vals
+            self.res_hour, self.res_minute = vals[0:2]
+            if self.show_sec: self.res_second = vals[2]
         else:
-            self.res_ampm, self.res_hour, self.res_minute, self.res_second = vals
+            self.res_ampm, self.res_hour, self.res_minute = vals[0:3]
+            if self.show_sec: self.res_second = vals[3]
             
         full_time = self._get_time_str()
         self.self.itemconfig(self.main_text, text=full_time)
@@ -249,7 +257,7 @@ class TinUITimePicker:
             index = minute
             _, t, _, _ = next(islice(self.pickerbars[base_index+1].choices.values(), index, index+1))
             self._pick_sel_it(self.pickerbars[base_index+1], t, base_index+1)
-        if second is not None:
+        if second is not None and self.show_sec:
             index = second
             _, t, _, _ = next(islice(self.pickerbars[base_index+2].choices.values(), index, index+1))
             self._pick_sel_it(self.pickerbars[base_index+2], t, base_index+2)
@@ -264,7 +272,7 @@ if __name__ == "__main__":
 
     ui = BasicTinUI(root)
     ui.pack(fill='both', expand=True)
-    ttp = TinUITimePicker(ui, (10,10), font=("Segoe UI", 12), is_24h=False, now=datetime(1,1,1,6,23,45), command=print, anchor='center')
+    ttp = TinUITimePicker(ui, (10,10), font=("Segoe UI", 12), is_24h=False, show_sec=False, now=datetime(1,1,1,6,23,45), command=print, anchor='center')
     ttp.set_time(16,0,19)
 
     rp = ExpandPanel(ui)

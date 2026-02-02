@@ -46,14 +46,19 @@ self.cfg = {
 
 ```python
 TinUITimePicker(
-    tinui, pos, font=("微软雅黑", 10), is_24h=True, now = datetime.now(),
+    tinui, pos, font=("微软雅黑", 10),
+    is_24h=True, show_sec=True,
+    now = datetime.now(),
     command=None, anchor='nw', **kwargs
 )
 ```
 
 默认样式同`TinUIDatePicker`
 
-> `command`接收一个形如`16:00:09`或者`PM 04:00:09`的字符串参数。
+- is_24h-是否是24小时制，如果`否`，则开头显示`AM`和`PM`选项
+- show_sec-是否可选`秒`
+
+> `command`接收一个形如`16:00:09`或者`PM 04:00:09`的字符串参数。若`show_sec`为`False`，则不回传`秒`。
 
 **set_time(hour:int=None, minute:int=None, second:int=None)**
 

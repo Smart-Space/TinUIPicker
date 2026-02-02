@@ -143,7 +143,7 @@ class TinUIDatePicker:
 
     def _setup_picker_ui(self):
         """核心：一次性初始化 Toplevel 窗口和三列选择器"""
-        width, height = 230, 260
+        width, height = 227, 260
         # 调用 TinUI 私有方法创建顶层窗口
         self.picker, self.bar = self.self._BasicTinUI__ui_toplevel(width, height, "#01FF11", lambda e: self.picker.withdraw())
         self.picker.bind("<Escape>", lambda e: self.picker.withdraw())
