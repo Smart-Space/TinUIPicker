@@ -58,6 +58,14 @@ class TinUITimePicker:
         else:
             base = f"{self.res_hour} : {self.res_minute}"
         return f"{self.res_ampm} {base}".strip()
+    
+    def _get_time_str_for_command(self):
+        """生成命令行使用的格式化字符串"""
+        if self.show_sec:
+            base = f"{self.res_hour}:{self.res_minute}:{self.res_second}"
+        else:
+            base = f"{self.res_hour}:{self.res_minute}"
+        return f"{self.res_ampm} {base}".strip()
 
     def _build_trigger(self):
         """在主画布创建带圆角的触发框"""
@@ -236,7 +244,7 @@ class TinUITimePicker:
             self.res_ampm, self.res_hour, self.res_minute = vals[0:3]
             if self.show_sec: self.res_second = vals[3]
             
-        full_time = self._get_time_str()
+        full_time = self._get_time_str_for_command()
         self.self.itemconfig(self.main_text, text=full_time)
         if self.command: self.command(full_time)
         self.picker.withdraw()
