@@ -2,7 +2,7 @@
 
 为[TinUI](https://github.com/Smart-Space/TinUI)提供滚动选择器功能控件，相比于原版`picker`，TinUIPicker套件加入了日期选择和时间选择的功能。
 
-<img src="./screenshots/1.png" style="zoom:50%;" />
+<img src="./screenshots/1.png" width="500" />
 
 ---
 
@@ -72,7 +72,7 @@ TinUITimePicker(
 
 TinUIPicker提供了`pickerlight`和`pickerdark`两种配色样式表，均来自于TinUI明暗配色。
 
-<img src="./screenshots/2.png" style="zoom:48%;" /><img src="./screenshots/3.png" style="zoom:48%;" />
+<img src="./screenshots/2.png" width="300" /><img src="./screenshots/3.png" width="250" />
 
 ---
 
