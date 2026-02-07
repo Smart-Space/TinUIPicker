@@ -2,6 +2,8 @@
 
 为[TinUI](https://github.com/Smart-Space/TinUI)提供滚动选择器功能控件，相比于原版`picker`，TinUIPicker套件加入了日期选择和时间选择的功能。
 
+<img src="./screenshots/1.png" style="zoom:50%;" />
+
 ---
 
 ## TinUIDatePicker
@@ -70,11 +72,13 @@ TinUITimePicker(
 
 TinUIPicker提供了`pickerlight`和`pickerdark`两种配色样式表，均来自于TinUI明暗配色。
 
+<img src="./screenshots/2.png" style="zoom:48%;" /><img src="./screenshots/3.png" style="zoom:48%;" />
+
 ---
 
 ## 面板布局
 
-通过`TinUIDatePicker.uid`获取TinUIDatePicker的控件标识符。
+通过`TinUIDatePicker.uid`获取TinUIDatePicker的控件标识符。时间选择器类似。
 
 面板布局行为与`picker`一致。
 
@@ -83,26 +87,37 @@ TinUIPicker提供了`pickerlight`和`pickerdark`两种配色样式表，均来�
 ## 使用示例
 
 ```python
+from datetime import datetime
 from tkinter import Tk
-from tinui import ExpandPanel, VerticalPanel, HorizonPanel, BasicTinUI
 
+from tinui import BasicTinUI, ExpandPanel, HorizonPanel
 from tinuipicker.datepicker import TinUIDatePicker
-from tinuipicker import pickerlight
+from tinuipicker.timepicker import TinUITimePicker
+from tinuipicker import pickerlight, pickerdark
 
 root = Tk()
 root.geometry('400x400')
 
 ui = BasicTinUI(root)
 ui.pack(fill='both', expand=True)
-tdp = TinUIDatePicker(ui, (10,10), command=print, anchor='center', **pickerlight)
+
+tdp = TinUIDatePicker(ui, (10,10), font=("Segoe UI", 12), now=datetime(2026, 2, 19), command=print, anchor='center', **pickerlight)
+tdp.set_date(2016, 10)
+
+ttp = TinUITimePicker(ui, (10,10), font=("Segoe UI", 12), is_24h=False, show_sec=False, now=datetime(1,1,1,6,23,45), command=print, anchor='center', **pickerdark)
+ttp.set_time(16,0,19)
 
 rp = ExpandPanel(ui)
 hp = HorizonPanel(ui)
 rp.set_child(hp)
 
-ep = ExpandPanel(ui)
+ep = ExpandPanel(ui, bg='#f3f3f3')
 hp.add_child(ep, weight=1)
 ep.set_child(tdp.uid)
+
+ep2 = ExpandPanel(ui, bg='#202020')
+hp.add_child(ep2, weight=1)
+ep2.set_child(ttp.uid)
 
 def update(e):
     rp.update_layout(5,5,e.width-5,e.height-5)

@@ -130,7 +130,7 @@ class TinUITimePicker:
         initial_vals = ([self.res_ampm, self.res_hour] if not self.is_24h else [self.res_hour]) + [self.res_minute, self.res_second]
 
         for i, items in enumerate(data_sets):
-            pb = self.self.__class__(self.picker, bg=self.cfg['bg'], highlightthickness=0)
+            pb = BasicTinUI(self.picker, bg=self.cfg['bg'], highlightthickness=0)
             pb.place(x=curr_x, y=10, width=col_widths[i], height=height - 60)
             pb.newres = initial_vals[i]
             self.pickerbars.append(pb)
@@ -168,7 +168,8 @@ class TinUITimePicker:
                 box.tag_bind(tid, "<Leave>", lambda e, t=text_id, b=box: self._pick_mouse(b, t, False))
             y_ptr = bbox[3] + 8
         
-        box.config(scrollregion=box.bbox("all"))
+        bbox = list(box.bbox("all"))
+        box.config(scrollregion=bbox)
         box.bind("<MouseWheel>", lambda e: box.yview_scroll(int(-1 * (e.delta / 120)), "units"))
 
     def _pick_mouse(self, box, t, is_enter):
@@ -214,14 +215,14 @@ class TinUITimePicker:
     def show(self, event):
         """动画显示弹出框"""
         # 选中项居中
-        for i in range(len(self.pickerbars)):
-            bbox = self.pickerbars[i].bbox(self.sel_backs[i])
+        for i, picker in enumerate(self.pickerbars):
+            bbox = picker.bbox(self.sel_backs[i])
             centery = (bbox[1] + bbox[3]) / 2
-            view_centery = self.pickerbars[i].winfo_height() / 2
-            scroll_region = self.pickerbars[i].cget("scrollregion").split()
+            view_centery = picker.winfo_height() / 2
+            scroll_region = picker.cget("scrollregion").split()
             scroll_y1, scroll_y2 = int(scroll_region[1]), int(scroll_region[3])
             total_height = scroll_y2 - scroll_y1
-            self.pickerbars[i].yview_moveto((centery - view_centery)/total_height)
+            picker.yview_moveto((centery - view_centery)/total_height)
 
         bbox = self.self.bbox(self.out_line)
         sx, sy = event.x_root - (event.x - bbox[0]), event.y_root - (event.y - bbox[3])

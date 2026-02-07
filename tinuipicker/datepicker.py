@@ -185,14 +185,14 @@ class TinUIDatePicker:
         self._update_days()
 
         # 选中项居中
-        for i in range(3):
-            bbox = self.pickerbars[i].bbox(self.sel_backs[i])
+        for i, picker in enumerate(self.pickerbars):
+            bbox = picker.bbox(self.sel_backs[i])
             centery = (bbox[1] + bbox[3]) / 2
-            view_centery = self.pickerbars[i].winfo_height() / 2
-            scroll_region = self.pickerbars[i].cget("scrollregion").split()
+            view_centery = picker.winfo_height() / 2
+            scroll_region = picker.cget("scrollregion").split()
             scroll_y1, scroll_y2 = int(scroll_region[1]), int(scroll_region[3])
             total_height = scroll_y2 - scroll_y1
-            self.pickerbars[i].yview_moveto((centery - view_centery)/total_height)
+            picker.yview_moveto((centery - view_centery)/total_height)
         
         # 计算显示位置 (复刻源码 show)
         bbox = self.self.bbox(self.out_line)
