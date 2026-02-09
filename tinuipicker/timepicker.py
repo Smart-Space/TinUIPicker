@@ -244,10 +244,9 @@ class TinUITimePicker:
         else:
             self.res_ampm, self.res_hour, self.res_minute = vals[0:3]
             if self.show_sec: self.res_second = vals[3]
-            
-        full_time = self._get_time_str_for_command()
-        self.self.itemconfig(self.main_text, text=full_time)
-        if self.command: self.command(full_time)
+
+        self.self.itemconfig(self.main_text, text=self._get_time_str())
+        if self.command: self.command(self._get_time_str_for_command())
         self.picker.withdraw()
     
     def set_time(self, hour:int=None, minute:int=None, second:int=None):

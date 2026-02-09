@@ -7,12 +7,13 @@ from tinui.TinUI import TinUIString
 
 
 class TinUIDatePicker:
-    def __init__(self, tinui, pos, font=("微软雅黑", 10), command=None, 
+    def __init__(self, tinui, pos, font=("微软雅黑", 10), command=None, show_day=True,
                  year_range=(2000, 2030), now=datetime.today(), anchor='nw', **kwargs):
         self.self = tinui  # 这里的 self 是 BasicTinUI 实例
         self.pos = pos
         self.font = font
         self.command = command
+        self.show_day = show_day
         self.year_range = year_range
         self.anchor = anchor
         
@@ -43,7 +44,10 @@ class TinUIDatePicker:
 
     def _build_trigger(self):
         # 计算文本尺寸以确定外框大小
-        temp_text = f"{self.res_year}-{self.res_month}-{self.res_day}"
+        if self.show_day:
+            temp_text = f"{self.res_year}-{self.res_month}-{self.res_day}"
+        else:
+            temp_text = f"{self.res_year}-{self.res_month}"
         txtest = self.self.create_text(self.pos, text=temp_text, font=self.font)
         bbox = self.self.bbox(txtest)
         self.self.delete(txtest)
@@ -130,7 +134,7 @@ class TinUIDatePicker:
         
         box.newres = box.choices[t][0]
         # 年月变动刷新日
-        if col_type < 2:
+        if col_type < 2 and self.show_day:
             self._update_days()
 
     def _update_days(self):
@@ -144,6 +148,8 @@ class TinUIDatePicker:
     def _setup_picker_ui(self):
         """核心：一次性初始化 Toplevel 窗口和三列选择器"""
         width, height = 227, 260
+        if not self.show_day:
+            width = 164
         # 调用 TinUI 私有方法创建顶层窗口
         self.picker, self.bar = self.self._BasicTinUI__ui_toplevel(width, height, "#01FF11", lambda e: self.picker.withdraw())
         self.picker.bind("<Escape>", lambda e: self.picker.withdraw())
@@ -157,16 +163,16 @@ class TinUIDatePicker:
         self.sel_backs = [None, None, None]
 
         self.pickerbars = []
-        col_widths = [80, 60, 60]
+        col_widths = [80, 60, 60] if self.show_day else [80, 60]
         curr_x = 8
-        for i in range(3):
+        for i, col_width in enumerate(col_widths):
             # 每一列都是一个 BasicTinUI 画布
             pb = BasicTinUI(self.picker, bg=self.cfg['bg'], highlightthickness=0)
-            pb.place(x=curr_x, y=10, width=col_widths[i], height=height - 60)
+            pb.place(x=curr_x, y=10, width=col_width, height=height - 60)
             pb.newres = [self.res_year, self.res_month, self.res_day][i]
             pb.choices = {}
             self.pickerbars.append(pb)
-            curr_x += col_widths[i] + 5
+            curr_x += col_width + 5
 
         self._build_buttons(self.bar, width, height)
         # 初始化静态数据：年、月
@@ -182,7 +188,7 @@ class TinUIDatePicker:
     def show(self, event):
         """只负责定位和显示"""
         # 根据当前年月刷新“日”列表 (处理闰年)
-        self._update_days()
+        if self.show_day: self._update_days()
 
         # 选中项居中
         for i, picker in enumerate(self.pickerbars):
@@ -234,9 +240,12 @@ class TinUIDatePicker:
     def _confirm(self, e=None):
         self.res_year = self.pickerbars[0].newres
         self.res_month = self.pickerbars[1].newres
-        self.res_day = self.pickerbars[2].newres
-        
-        full_date = f"{self.res_year}-{self.res_month}-{self.res_day}"
+        if self.show_day:
+            self.res_day = self.pickerbars[2].newres
+            full_date = f"{self.res_year}-{self.res_month}-{self.res_day}"
+        else:
+            full_date = f"{self.res_year}-{self.res_month}"
+
         self.self.itemconfig(self.main_text, text=full_date)
         if self.command:
             self.command(full_date)
@@ -251,7 +260,7 @@ class TinUIDatePicker:
             index = month - 1
             _, t, _, _ = next(islice(self.pickerbars[1].choices.values(), index, index+1))
             self._pick_sel_it(self.pickerbars[1], t, 1)
-        if day:
+        if day and self.show_day:
             index = day - 1
             _, t, _, _ = next(islice(self.pickerbars[2].choices.values(), index, index+1))
             self._pick_sel_it(self.pickerbars[2], t, 2)
@@ -266,7 +275,7 @@ if __name__ == "__main__":
 
     ui = BasicTinUI(root)
     ui.pack(fill='both', expand=True)
-    tdp = TinUIDatePicker(ui, (10,10), font=("Segoe UI", 12), now=datetime(2026, 2, 19), command=print, anchor='center')
+    tdp = TinUIDatePicker(ui, (10,10), font=("Segoe UI", 12), show_day=False, now=datetime(2026, 2, 19), command=print, anchor='center')
     tdp.set_date(2016, 10)
 
     rp = ExpandPanel(ui)
