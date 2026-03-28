@@ -6,7 +6,7 @@ from tinui.TinUI import TinUIString
 
 
 class TinUITimePicker:
-    def __init__(self, tinui, pos, font=("微软雅黑", 10), is_24h=True, show_sec=True, now = datetime.now(), command=None, anchor='nw', **kwargs):
+    def __init__(self, tinui:BasicTinUI, pos, font=("微软雅黑", 10), is_24h=True, show_sec=True, now = datetime.now(), command=None, anchor='nw', **kwargs):
         self.self = tinui
         self.pos = pos
         self.font = font
@@ -14,6 +14,7 @@ class TinUITimePicker:
         self.show_sec = show_sec
         self.command = command
         self.anchor = anchor
+        self.scale_value = tinui.scale_value
         
         # 样式配置（复刻源码颜色）
         self.cfg = {
@@ -78,8 +79,8 @@ class TinUITimePicker:
         x, y = self.pos
         
         # 使用源码 polygon + width=9 模拟圆角
-        self.out_line = self.self.create_polygon((x,y, x+tw,y, x+tw,y+th, x,y+th), fill=self.cfg['outline'], outline=self.cfg['outline'], width=9)
-        self.back = self.self.create_polygon((x+1,y+1, x+tw-1,y+1, x+tw-1,y+th-1, x+1,y+th-1), fill=self.cfg['bg'], outline=self.cfg['bg'], width=9)
+        self.out_line = self.self.create_polygon((x,y, x+tw,y, x+tw,y+th, x,y+th), fill=self.cfg['outline'], outline=self.cfg['outline'], width=self.self.TINUI_RADIUS_SMALL)
+        self.back = self.self.create_polygon((x+1,y+1, x+tw-1,y+1, x+tw-1,y+th-1, x+1,y+th-1), fill=self.cfg['bg'], outline=self.cfg['bg'], width=self.self.TINUI_RADIUS_SMALL)
         self.main_text = self.self.create_text((x + tw/2, y + th/2), text=time_text, fill=self.cfg['fg'], font=self.font)
 
         uid = f"timepicker-{self.main_text}"
@@ -100,8 +101,9 @@ class TinUITimePicker:
         col_widths = [50, 60, 60, 60] if not self.is_24h else [60, 60, 60]
         if not self.show_sec:
             col_widths.pop()
-        width = sum(col_widths) + (len(col_widths) * 3) + 12
-        height = 260
+        col_widths = [self.scale_value(w) for w in col_widths]
+        width = sum(col_widths) + (len(col_widths) * 3) + self.scale_value(12)
+        height = self.scale_value(260)
         
         self.picker, self.bar = self.self._BasicTinUI__ui_toplevel(width, height, "#01FF11", lambda e: self.picker.withdraw())
         self.picker.bind("<Escape>", lambda e: self.picker.withdraw())
@@ -135,7 +137,7 @@ class TinUITimePicker:
             pb.newres = initial_vals[i]
             self.pickerbars.append(pb)
             self._loaddata(pb, items, col_widths[i], i)
-            curr_x += col_widths[i] + 3
+            curr_x += col_widths[i] + 3 * self.self.TINUISCALE
 
         self._build_buttons(self.bar, width, height)
 
@@ -194,7 +196,7 @@ class TinUITimePicker:
 
     def _build_buttons(self, bar, width, height):
         """创建确定/取消按钮，使用 Fluent 图标字符"""
-        mid = (width - 9) / 2
+        mid = (width - self.self.TINUI_RADIUS_SMALL) / 2
         ok = bar.add_button2((mid/2 + 4, height-22), text="\ue73e", font="{Segoe Fluent Icons} 12",
             fg=self.cfg['buttonfg'], bg=self.cfg['buttonbg'], line='',
             activefg=self.cfg['buttonactivefg'], activebg=self.cfg['buttonactivebg'], activeline=self.cfg['outline'],
@@ -207,10 +209,10 @@ class TinUITimePicker:
             command=lambda e: self.picker.withdraw(), anchor="center")
         
         # 调整背景色块坐标，使其平铺底部
-        bar.coords(ok[1], (9, height-35, mid-5, height-35, mid-5, height-9, 9, height-9))
-        bar.coords(ok[2], (8, height-34, mid-4, height-34, mid-4, height-8, 8, height-8))
-        bar.coords(no[1], (mid+5, height-35, width-9, height-35, width-9, height-9, mid+5, height-9))
-        bar.coords(no[2], (mid+4, height-34, width-8, height-34, width-8, height-8, mid+4, height-8))
+        bar.coords(ok[1], (self.scale_value(9), height-35, mid-self.scale_value(5), height-35, mid-self.scale_value(5), height-self.scale_value(9), self.scale_value(9), height-self.scale_value(9)))
+        bar.coords(ok[2], (self.scale_value(8), height-34, mid-self.scale_value(4), height-34, mid-self.scale_value(4), height-self.scale_value(8), self.scale_value(8), height-self.scale_value(8)))
+        bar.coords(no[1], (mid+self.scale_value(5), height-35, width-self.scale_value(9), height-35, width-self.scale_value(9), height-self.scale_value(9), mid+self.scale_value(5), height-self.scale_value(9)))
+        bar.coords(no[2], (mid+self.scale_value(4), height-34, width-self.scale_value(8), height-34, width-self.scale_value(8), height-self.scale_value(8), mid+self.scale_value(4), height-self.scale_value(8)))
 
     def show(self, event):
         """动画显示弹出框"""
@@ -275,10 +277,14 @@ class TinUITimePicker:
 if __name__ == "__main__":
     from tkinter import Tk
     from tinui import ExpandPanel, HorizonPanel
+    # import ctypes
+    # ctypes.windll.shcore.SetProcessDpiAwareness(2)
+    # scale_factor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100.0
     root = Tk()
     root.geometry('400x400')
 
     ui = BasicTinUI(root)
+    # ui.set_scale(scale_factor)
     ui.pack(fill='both', expand=True)
     ttp = TinUITimePicker(ui, (10,10), font=("Segoe UI", 12), is_24h=False, show_sec=False, now=datetime(1,1,1,6,23,45), command=print, anchor='center')
     ttp.set_time(16,0,19)

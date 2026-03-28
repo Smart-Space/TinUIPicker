@@ -7,7 +7,7 @@ from tinui.TinUI import TinUIString
 
 
 class TinUIDatePicker:
-    def __init__(self, tinui, pos, font=("微软雅黑", 10), command=None, show_day=True,
+    def __init__(self, tinui:BasicTinUI, pos, font=("微软雅黑", 10), command=None, show_day=True,
                  year_range=(2000, 2030), now=datetime.today(), anchor='nw', **kwargs):
         self.self = tinui  # 这里的 self 是 BasicTinUI 实例
         self.pos = pos
@@ -16,6 +16,7 @@ class TinUIDatePicker:
         self.show_day = show_day
         self.year_range = year_range
         self.anchor = anchor
+        self.scale_value = tinui.scale_value  # 获取 TinUI 的缩放值以适配 DPI
         
         # 继承源码中的默认配色
         self.cfg = {
@@ -57,11 +58,11 @@ class TinUIDatePicker:
 
         self.out_line = self.self.create_polygon(
             (x, y, x+tw, y, x+tw, y+th, x, y+th), 
-            fill=self.cfg['outline'], outline=self.cfg['outline'], width=9
+            fill=self.cfg['outline'], outline=self.cfg['outline'], width=self.self.TINUI_RADIUS_SMALL
         )
         self.back = self.self.create_polygon(
             (x+1, y+1, x+tw-1, y+1, x+tw-1, y+th-1, x+1, y+th-1),
-            fill=self.cfg['bg'], outline=self.cfg['bg'], width=9
+            fill=self.cfg['bg'], outline=self.cfg['bg'], width=self.self.TINUI_RADIUS_SMALL
         )
         self.main_text = self.self.create_text(
             (x + tw/2, y + th/2), text=temp_text, fill=self.cfg['fg'], font=self.font
@@ -143,13 +144,13 @@ class TinUIDatePicker:
         # 如果之前的日期超限（如31号变30号），重置为最后一天
         if int(self.pickerbars[2].newres) > len(days):
             self.pickerbars[2].newres = days[-1]
-        self._loaddata(self.pickerbars[2], days, 60, 2)
+        self._loaddata(self.pickerbars[2], days, self.scale_value(60), 2)
 
     def _setup_picker_ui(self):
         """核心：一次性初始化 Toplevel 窗口和三列选择器"""
-        width, height = 227, 260
+        width, height = self.scale_value(227), self.scale_value(260)
         if not self.show_day:
-            width = 164
+            width = self.scale_value(164)
         # 调用 TinUI 私有方法创建顶层窗口
         self.picker, self.bar = self.self._BasicTinUI__ui_toplevel(width, height, "#01FF11", lambda e: self.picker.withdraw())
         self.picker.bind("<Escape>", lambda e: self.picker.withdraw())
@@ -164,6 +165,7 @@ class TinUIDatePicker:
 
         self.pickerbars = []
         col_widths = [80, 60, 60] if self.show_day else [80, 60]
+        col_widths = [self.scale_value(w) for w in col_widths]
         curr_x = 8
         for i, col_width in enumerate(col_widths):
             # 每一列都是一个 BasicTinUI 画布
@@ -171,15 +173,15 @@ class TinUIDatePicker:
             pb.place(x=curr_x, y=10, width=col_width, height=height - 60)
             pb.newres = [self.res_year, self.res_month, self.res_day][i]
             pb.choices = {}
+            curr_x += col_width + 5 * self.self.TINUISCALE
             self.pickerbars.append(pb)
-            curr_x += col_width + 5
 
         self._build_buttons(self.bar, width, height)
         # 初始化静态数据：年、月
         years = [str(y) for y in range(self.year_range[0], self.year_range[1]+1)]
         months = [str(m).zfill(2) for m in range(1, 13)]
-        self._loaddata(self.pickerbars[0], years, 80, 0)
-        self._loaddata(self.pickerbars[1], months, 60, 1)
+        self._loaddata(self.pickerbars[0], years, self.scale_value(80), 0)
+        self._loaddata(self.pickerbars[1], months, self.scale_value(60), 1)
 
         # 屏幕最大尺寸
         self.maxx = self.self.winfo_screenwidth()
@@ -203,13 +205,15 @@ class TinUIDatePicker:
         # 计算显示位置 (复刻源码 show)
         bbox = self.self.bbox(self.out_line)
         sx, sy = event.x_root - (event.x - bbox[0]), event.y_root - (event.y - bbox[3])
-        if sx+240 > self.maxx:
-            sx = self.maxx-240
-        if sy+275 > self.maxy:
-            sy = self.maxy-275
+        if sx+self.scale_value(240) > self.maxx:
+            sx = self.maxx-self.scale_value(240)
+        if sy+self.scale_value(275) > self.maxy:
+            sy = self.maxy-self.scale_value(275)
         
         # 动画显示
-        self.picker.geometry(f"240x275+{int(sx)-3}+{int(sy)}")
+        width = self.scale_value(240)
+        height = self.scale_value(275)
+        self.picker.geometry(f"{width}x{height}+{int(sx)-3}+{int(sy)}")
         self.picker.attributes("-alpha", 0)
         self.picker.deiconify()
         self.picker.focus_set()
@@ -231,11 +235,11 @@ class TinUIDatePicker:
             command=lambda e: self.picker.withdraw(), anchor="center")
         
         # 调整按钮背景框 (源码中的 coords 调整逻辑)
-        mid = (width - 9) / 2
-        bar.coords(ok[1], (9, height-35, mid-5, height-35, mid-5, height-9, 9, height-9))
-        bar.coords(ok[2], (8, height-34, mid-4, height-34, mid-4, height-8, 8, height-8))
-        bar.coords(no[1], (mid+5, height-35, width-9, height-35, width-9, height-9, mid+5, height-9))
-        bar.coords(no[2], (mid+4, height-34, width-8, height-34, width-8, height-8, mid+4, height-8))
+        mid = (width - self.self.TINUI_RADIUS_SMALL) / 2
+        bar.coords(ok[1], (self.scale_value(9), height-35, mid-self.scale_value(5), height-35, mid-self.scale_value(5), height-self.scale_value(9), self.scale_value(9), height-self.scale_value(9)))
+        bar.coords(ok[2], (self.scale_value(8), height-34, mid-self.scale_value(4), height-34, mid-self.scale_value(4), height-self.scale_value(8), self.scale_value(8), height-self.scale_value(8)))
+        bar.coords(no[1], (mid+self.scale_value(5), height-35, width-self.scale_value(9), height-35, width-self.scale_value(9), height-self.scale_value(9), mid+self.scale_value(5), height-self.scale_value(9)))
+        bar.coords(no[2], (mid+self.scale_value(4), height-34, width-self.scale_value(8), height-34, width-self.scale_value(8), height-self.scale_value(8), mid+self.scale_value(4), height-self.scale_value(8)))
 
     def _confirm(self, e=None):
         self.res_year = self.pickerbars[0].newres
@@ -270,10 +274,14 @@ class TinUIDatePicker:
 if __name__ == "__main__":
     from tkinter import Tk
     from tinui import ExpandPanel, HorizonPanel
+    # import ctypes
+    # ctypes.windll.shcore.SetProcessDpiAwareness(2) # 高DPI适配
+    # scale_factor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
     root = Tk()
     root.geometry('400x400')
 
     ui = BasicTinUI(root)
+    # ui.set_scale(scale_factor)
     ui.pack(fill='both', expand=True)
     tdp = TinUIDatePicker(ui, (10,10), font=("Segoe UI", 12), show_day=False, now=datetime(2026, 2, 19), command=print, anchor='center')
     tdp.set_date(2016, 10)
