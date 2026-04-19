@@ -86,12 +86,12 @@ class TinUITimePicker:
         uid = f"timepicker-{self.main_text}"
         self.uid = TinUIString(uid)
         for i in (self.out_line, self.back, self.main_text): self.self.addtag_withtag(uid, i)
-        self.self.tag_bind(uid, "<Enter>", lambda e: self.self.itemconfig(self.back, fill=self.cfg['activebg'], outline=self.cfg['activebg']))
-        self.self.tag_bind(uid, "<Leave>", lambda e: self.self.itemconfig(self.back, fill=self.cfg['bg'], outline=self.cfg['bg']))
+        self.self.tag_bind(uid, "<Enter>", lambda _: self.self.itemconfig(self.back, fill=self.cfg['activebg'], outline=self.cfg['activebg']))
+        self.self.tag_bind(uid, "<Leave>", lambda _: self.self.itemconfig(self.back, fill=self.cfg['bg'], outline=self.cfg['bg']))
         self.self.tag_bind(uid, "<Button-1>", self.show)
 
         self.self._BasicTinUI__auto_anchor(uid, self.pos, self.anchor)
-        self.uid.layout = lambda x1, y1, x2, y2, expand=False: self.self._BasicTinUI__auto_layout(
+        self.uid.layout = lambda x1, y1, x2, y2, _=False: self.self._BasicTinUI__auto_layout(
             uid, (x1, y1, x2, y2), self.anchor
         )
 
@@ -153,7 +153,7 @@ class TinUITimePicker:
         for i in items:
             text_id = box.create_text((mw/2, y_ptr + 2), text=i, fill=self.cfg['fg'], font=self.font, anchor="n")
             bbox = box.bbox(text_id)
-            back_id = box.create_rectangle((3, bbox[1] - 4, mw+3, bbox[3] + 4), width=0, fill=self.cfg['bg'])
+            back_id = box._BasicTinUI__ui_polygon(((self.scale_value(5), bbox[1]+self.scale_value(2)), (mw-self.scale_value(5), bbox[3]-self.scale_value(2))), width=self.self.TINUI_RADIUS_SMALL, fill=self.cfg['bg'], outline=self.cfg['bg'])
             box.tkraise(text_id)
             
             is_sel = (i == box.newres)
@@ -168,7 +168,7 @@ class TinUITimePicker:
                 box.tag_bind(tid, "<Button-1>", lambda e, t=text_id, b=box: self._pick_sel_it(b, t, col_type))
                 box.tag_bind(tid, "<Enter>", lambda e, t=text_id, b=box: self._pick_mouse(b, t, True))
                 box.tag_bind(tid, "<Leave>", lambda e, t=text_id, b=box: self._pick_mouse(b, t, False))
-            y_ptr = bbox[3] + 8
+            y_ptr = bbox[3] + self.scale_value(8)
         
         bbox = list(box.bbox("all"))
         box.config(scrollregion=bbox)
@@ -177,7 +177,8 @@ class TinUITimePicker:
     def _pick_mouse(self, box, t, is_enter):
         data = box.choices[t]
         if not data[3]:
-            box.itemconfig(data[2], fill=self.cfg['activebg'] if is_enter else self.cfg['bg'])
+            color = self.cfg['activebg'] if is_enter else self.cfg['bg']
+            box.itemconfig(data[2], fill=color, outline=color)
 
     def _pick_sel_it(self, box, t, col_type):
         """切换选中项视觉效果"""
@@ -190,7 +191,7 @@ class TinUITimePicker:
             else:
                 fill_bg = self.cfg['bg']
                 fill_fg = self.cfg['fg']
-            box.itemconfig(data[2], fill=fill_bg)
+            box.itemconfig(data[2], fill=fill_bg, outline=fill_bg)
             box.itemconfig(data[1], fill=fill_fg)
         box.newres = box.choices[t][0]
 

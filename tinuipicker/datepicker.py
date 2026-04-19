@@ -74,12 +74,12 @@ class TinUIDatePicker:
         for i in (self.out_line, self.back, self.main_text):
             self.self.addtag_withtag(uid, i)
             
-        self.self.tag_bind(uid, "<Enter>", lambda e: self.self.itemconfig(self.back, fill=self.cfg['activebg'], outline=self.cfg['activebg']))
-        self.self.tag_bind(uid, "<Leave>", lambda e: self.self.itemconfig(self.back, fill=self.cfg['bg'], outline=self.cfg['bg']))
+        self.self.tag_bind(uid, "<Enter>", lambda _: self.self.itemconfig(self.back, fill=self.cfg['activebg'], outline=self.cfg['activebg']))
+        self.self.tag_bind(uid, "<Leave>", lambda _: self.self.itemconfig(self.back, fill=self.cfg['bg'], outline=self.cfg['bg']))
         self.self.tag_bind(uid, "<Button-1>", self.show)
 
         self.self._BasicTinUI__auto_anchor(uid, self.pos, self.anchor)
-        self.uid.layout = lambda x1, y1, x2, y2, expand=False: self.self._BasicTinUI__auto_layout(
+        self.uid.layout = lambda x1, y1, x2, y2, _=False: self.self._BasicTinUI__auto_layout(
             uid, (x1, y1, x2, y2), self.anchor
         )
 
@@ -91,14 +91,14 @@ class TinUIDatePicker:
         for i in items:
             text_id = box.create_text((mw/2, y_ptr + 2), text=i, fill=self.cfg['fg'], font=self.font, anchor="n")
             bbox = box.bbox(text_id)
-            back_id = box.create_rectangle((3, bbox[1] - 4, 3 + mw, bbox[3] + 4), width=0, fill=self.cfg['bg'])
+            back_id = box._BasicTinUI__ui_polygon(((self.scale_value(5), bbox[1]+self.scale_value(2)), (mw-self.scale_value(5), bbox[3]-self.scale_value(2))), width=self.self.TINUI_RADIUS_SMALL, fill=self.cfg['bg'], outline=self.cfg['bg'])
             box.tkraise(text_id)
             
             # 记录并标记初始选中
             is_sel = (i == box.newres)
             if is_sel:
                 self.sel_backs[col_type] = back_id
-                box.itemconfig(back_id, fill=self.cfg['onbg'])
+                box.itemconfig(back_id, fill=self.cfg['onbg'], outline=self.cfg['onbg'])
                 box.itemconfig(text_id, fill=self.cfg['onfg'])
 
             box.choices[text_id] = [i, text_id, back_id, is_sel]
@@ -107,7 +107,7 @@ class TinUIDatePicker:
                 box.tag_bind(tid, "<Button-1>", lambda e, t=text_id, b=box, ct=col_type: self._pick_sel_it(b, t, ct))
                 box.tag_bind(tid, "<Enter>", lambda e, t=text_id, b=box: self._pick_mouse(b, t, True))
                 box.tag_bind(tid, "<Leave>", lambda e, t=text_id, b=box: self._pick_mouse(b, t, False))
-            y_ptr = bbox[3] + 8
+            y_ptr = bbox[3] + self.scale_value(8)
         
         box.config(scrollregion=box.bbox("all"))
         box.bind("<MouseWheel>", lambda e: box.yview_scroll(int(-1 * (e.delta / 120)), "units"))
@@ -117,7 +117,7 @@ class TinUIDatePicker:
         data = box.choices[t] # [val, txt, back, is_sel]
         if data[3]: return # 已选中不处理
         color = self.cfg['activebg'] if is_enter else self.cfg['bg']
-        box.itemconfig(data[2], fill=color)
+        box.itemconfig(data[2], fill=color, outline=color)
 
     def _pick_sel_it(self, box, t, col_type):
         """处理点击选中"""
@@ -130,7 +130,7 @@ class TinUIDatePicker:
             else:
                 fill_bg = self.cfg['bg']
                 fill_fg = self.cfg['fg']
-            box.itemconfig(data[2], fill=fill_bg)
+            box.itemconfig(data[2], fill=fill_bg, outline=fill_bg)
             box.itemconfig(data[1], fill=fill_fg)
         
         box.newres = box.choices[t][0]
@@ -283,7 +283,7 @@ if __name__ == "__main__":
     ui = BasicTinUI(root)
     # ui.set_scale(scale_factor)
     ui.pack(fill='both', expand=True)
-    tdp = TinUIDatePicker(ui, (10,10), font=("Segoe UI", 12), show_day=False, now=datetime(2026, 2, 19), command=print, anchor='center')
+    tdp = TinUIDatePicker(ui, (10,10), font=("Segoe UI", 12), show_day=True, now=datetime(2026, 2, 19), command=print, anchor='center')
     tdp.set_date(2016, 10)
 
     rp = ExpandPanel(ui)
