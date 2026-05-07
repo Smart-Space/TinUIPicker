@@ -148,9 +148,10 @@ class TinUIDatePicker:
 
     def _setup_picker_ui(self):
         """核心：一次性初始化 Toplevel 窗口和三列选择器"""
-        width, height = self.scale_value(227), self.scale_value(260)
-        if not self.show_day:
-            width = self.scale_value(164)
+        col_widths = [80, 60, 60] if self.show_day else [80, 60]
+        col_widths = [self.scale_value(w) for w in col_widths]
+        width = sum(col_widths) + (len(col_widths) * 3) + self.scale_value(12)
+        height = self.scale_value(260)
         # 调用 TinUI 私有方法创建顶层窗口
         self.picker, self.bar = self.self._BasicTinUI__ui_toplevel(width, height, "#01FF11", lambda e: self.picker.withdraw())
         self.picker.bind("<Escape>", lambda e: self.picker.withdraw())
@@ -164,8 +165,6 @@ class TinUIDatePicker:
         self.sel_backs = [None, None, None]
 
         self.pickerbars = []
-        col_widths = [80, 60, 60] if self.show_day else [80, 60]
-        col_widths = [self.scale_value(w) for w in col_widths]
         curr_x = 8
         for i, col_width in enumerate(col_widths):
             # 每一列都是一个 BasicTinUI 画布
@@ -173,7 +172,7 @@ class TinUIDatePicker:
             pb.place(x=curr_x, y=10, width=col_width, height=height - 60)
             pb.newres = [self.res_year, self.res_month, self.res_day][i]
             pb.choices = {}
-            curr_x += col_width + 5 * self.self.TINUISCALE
+            curr_x += col_width + 3 * self.self.TINUISCALE
             self.pickerbars.append(pb)
 
         self._build_buttons(self.bar, width, height)
