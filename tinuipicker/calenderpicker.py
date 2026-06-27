@@ -272,14 +272,14 @@ class TinUICalendarPicker:
 if __name__ == "__main__":
     from tkinter import Tk
     from tinui import ExpandPanel, HorizonPanel
-    import ctypes
-    ctypes.windll.shcore.SetProcessDpiAwareness(2) # 高DPI适配
-    scale_factor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
+    # import ctypes
+    # ctypes.windll.shcore.SetProcessDpiAwareness(2) # 高DPI适配
+    # scale_factor = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
     root = Tk()
     root.geometry('400x400')
 
     ui = BasicTinUI(root)
-    ui.set_scale(scale_factor)
+    # ui.set_scale(scale_factor)
     ui.pack(fill='both', expand=True)
 
     tdp = TinUICalendarPicker(ui, (10,10), font=("微软雅黑", 12), command=print, anchor='center')
