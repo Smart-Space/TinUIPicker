@@ -1,6 +1,6 @@
 # TinUIPicker
 
-为[TinUI](https://github.com/Smart-Space/TinUI)提供滚动选择器功能控件，相比于原版`picker`，TinUIPicker套件加入了日期选择和时间选择的功能。
+为[TinUI](https://github.com/Smart-Space/TinUI)提供滚动选择器功能控件，相比于原版`picker`，TinUIPicker套件加入了日期选择、时间选择和日历选择的功能。
 
 <img src="./screenshots/1.png" width="500" />
 
@@ -68,17 +68,39 @@ TinUITimePicker(
 
 ---
 
+## TinUICalendarPicker
+
+```python
+TinUICalendarPicker(
+    tinui, pos, font=("微软雅黑", 10),
+    command=None,
+    now=datetime.today(), anchor='nw', **kwargs
+)
+```
+
+默认样式同`TinUIDatePicker`。本控件提供日历样式的日期选择功能。
+
+> `command`接收一个形如`2026-01-30`的字符串参数。
+
+**set_date(year:int, month:int, day:int)**
+
+设置年-月-日。
+
+---
+
 ## 样式表
 
 TinUIPicker提供了`pickerlight`和`pickerdark`两种配色样式表，均来自于TinUI明暗配色。
 
 <img src="./screenshots/2.png" width="300" /><img src="./screenshots/3.png" width="250" />
 
+<img src="screenshots/4.png" width="250" />
+
 ---
 
 ## 面板布局
 
-通过`TinUIDatePicker.uid`获取TinUIDatePicker的控件标识符。时间选择器类似。
+通过`TinUIDatePicker.uid`获取TinUIDatePicker的控件标识符。时间选择器与日历选择器类似。
 
 面板布局行为与`picker`一致。
 
