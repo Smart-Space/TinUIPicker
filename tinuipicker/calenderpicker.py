@@ -12,6 +12,7 @@ class TinUICalendarPicker:
         self.scale_value = tinui.scale_value
         self.pos = pos
         self.font = Font(font=font)
+        self.segoe_font = Font(family="{Segoe Fluent Icons}", size=self.font.cget("size")-2)
         self.font_width = self.font.measure('30')
         self.cell_size = self.scale_value(15) + self.font_width # 每个日期单元格的大小，考虑字体宽度
         self.width = self.cell_size * 7 + self.scale_value(20)
@@ -102,20 +103,20 @@ class TinUICalendarPicker:
         offset_y = self.scale_value(10)
 
         # 年月显示
-        self.title_text = self.bar.create_text(
-            (offset_x, offset_y),
-            text=f"{self.view_year}-{self.view_month}", # 考虑可以使用模板字符串作为参数设置具体显示格式
-            fill=self.cfg['fg'], font=self.font, anchor="nw"
-        )
+        # 考虑可以使用模板字符串作为参数设置具体显示格式
+        self.title_text = self.bar.add_button2((offset_x,offset_y+self.cell_size//2), minwidth=width-self.cell_size*3, text=f"{self.view_year}-{self.view_month}", fg=self.cfg['buttonfg'], bg=self.cfg['buttonbg'], line=self.cfg['buttonbg'], activefg=self.cfg['buttonactivefg'], activebg=self.cfg['buttonactivebg'], activeline=self.cfg['buttonactivebg'], onfg=self.cfg['buttononfg'], onbg=self.cfg['buttononbg'], online=self.cfg['buttononbg'], font=self.font, command=None, anchor='w')[0]
 
         # 右上角按钮 (上一月、下一月)
-        btn_y = offset_y
+        btn_y = offset_y + self.cell_size//2
         btn_w = self.cell_size
         prev_btn_x = width - btn_w * 2
         next_btn_x = width - btn_w
 
-        self.bar.add_button2((prev_btn_x,btn_y), icon='\uF090', text='', fg=self.cfg['buttonfg'], bg=self.cfg['buttonbg'], line=self.cfg['buttonbg'], activefg=self.cfg['buttonactivefg'], activebg=self.cfg['buttonactivebg'], activeline=self.cfg['buttonactivebg'], onfg=self.cfg['buttononfg'], onbg=self.cfg['buttononbg'], online=self.cfg['buttononbg'], font=self.font, command=self._prev_month)
-        self.bar.add_button2((next_btn_x,btn_y), icon='\uF08E', text='', fg=self.cfg['buttonfg'], bg=self.cfg['buttonbg'], line=self.cfg['buttonbg'], activefg=self.cfg['buttonactivefg'], activebg=self.cfg['buttonactivebg'], activeline=self.cfg['buttonactivebg'], onfg=self.cfg['buttononfg'], onbg=self.cfg['buttononbg'], online=self.cfg['buttononbg'], font=self.font, command=self._next_month)
+        self.bar.add_button2((prev_btn_x,btn_y), icon='\uF090', text='', fg=self.cfg['buttonfg'], bg=self.cfg['buttonbg'], line=self.cfg['buttonbg'], activefg=self.cfg['buttonactivefg'], activebg=self.cfg['buttonactivebg'], activeline=self.cfg['buttonactivebg'], onfg=self.cfg['buttononfg'], onbg=self.cfg['buttononbg'], online=self.cfg['buttononbg'], font=self.segoe_font, command=self._prev_month, anchor='w')
+        self.bar.add_button2((next_btn_x,btn_y), icon='\uF08E', text='', fg=self.cfg['buttonfg'], bg=self.cfg['buttonbg'], line=self.cfg['buttonbg'], activefg=self.cfg['buttonactivefg'], activebg=self.cfg['buttonactivebg'], activeline=self.cfg['buttonactivebg'], onfg=self.cfg['buttononfg'], onbg=self.cfg['buttononbg'], online=self.cfg['buttononbg'], font=self.segoe_font, command=self._next_month, anchor='w')
+
+        # 分割线
+        self.bar.add_separate((offset_x, offset_y+self.cell_size+self.scale_value(2)), width=self.cell_size*7, fg=self.cfg['outline'])
 
         # 星期简称栏
         weekdays = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"] # 之后也可以考虑作为设置显示具体格式，但目前规定一周的开头是周一
