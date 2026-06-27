@@ -8,10 +8,6 @@
 
 ## TinUIDatePicker
 
-> [!important]
->
-> TinUIDatePicker原始框架代码由**Gemini3**根据TinUI的`picker`源码修改而来，之后我才进行了交互优化和样式优化，AI代码部分未完全审查。
-
 ```python
 TinUIDatePicker(
     tinui, pos, font=("微软雅黑", 10), command=None, 
