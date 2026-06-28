@@ -7,8 +7,7 @@ from tinui.TinUI import TinUIString
 
 
 class TinUICalendarPicker:
-    DAY_MODE_TAG = "day_mode"
-    MONTH_MODE_TAG = "month_mode"
+    CONTENT_TAG = "content_tag"
 
     def __init__(self, tinui:BasicTinUI, pos, font=("微软雅黑", 10), command=None, now=datetime.today(), anchor='nw', **kwargs):
         self.self = tinui
@@ -142,7 +141,7 @@ class TinUICalendarPicker:
         for i, day in enumerate(weekdays):
             self.bar.create_text(
                 (offset_x + self.cell_size * i + self.cell_size/2, week_y + self.cell_size/2),
-                text=day, fill=self.cfg['fg'], font=self.font, tags=self.DAY_MODE_TAG
+                text=day, fill=self.cfg['fg'], font=self.font, tags=self.CONTENT_TAG
             )
 
         # 日期网格
@@ -157,11 +156,10 @@ class TinUICalendarPicker:
         self._redraw_calendar()
 
     def _redraw_calendar(self):
+        self.bar.delete(self.CONTENT_TAG)
         if self.month_select_mode:
-            self.bar.delete(self.DAY_MODE_TAG)
             self._build_month_select_ui()
         else:
-            self.bar.delete(self.MONTH_MODE_TAG)
             self._build_day_select_ui()
 
     def _build_month_select_ui(self):
@@ -194,9 +192,9 @@ class TinUICalendarPicker:
 
         back = self.bar.create_oval(
             cx - month_radius, cy - month_radius, cx + month_radius, cy + month_radius,
-            fill=self.cfg['buttonbg'], outline=self.cfg['buttonbg'], width=self.scale_value(1), tags=self.MONTH_MODE_TAG
+            fill=self.cfg['buttonbg'], outline=self.cfg['buttonbg'], width=self.scale_value(1), tags=self.CONTENT_TAG
         )
-        text = self.bar.create_text((cx, cy), text=month_text, fill=self.cfg['buttonfg'], font=self.font, tags=self.MONTH_MODE_TAG)
+        text = self.bar.create_text((cx, cy), text=month_text, fill=self.cfg['buttonfg'], font=self.font, tags=self.CONTENT_TAG)
 
         is_selected = (month == self.view_month)
         if is_selected:
@@ -259,9 +257,9 @@ class TinUICalendarPicker:
         r = self.cell_size/2
 
         # 圆形背景
-        back = self.bar.create_oval(cx - r, cy - r, cx + r, cy + r, fill=self.cfg['buttonbg'], outline=self.cfg['buttonbg'], width=self.scale_value(1), tags=self.DAY_MODE_TAG)
+        back = self.bar.create_oval(cx - r, cy - r, cx + r, cy + r, fill=self.cfg['buttonbg'], outline=self.cfg['buttonbg'], width=self.scale_value(1), tags=self.CONTENT_TAG)
         # 文本
-        text = self.bar.create_text((cx, cy), text=str(day), fill=self.cfg['buttonfg'], font=self.font, tags=self.DAY_MODE_TAG)
+        text = self.bar.create_text((cx, cy), text=str(day), fill=self.cfg['buttonfg'], font=self.font, tags=self.CONTENT_TAG)
 
         items = (back, text)
 
