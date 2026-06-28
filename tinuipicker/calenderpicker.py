@@ -19,6 +19,7 @@ class TinUICalendarPicker:
         self.height = self.cell_size * 8 + self.scale_value(20) # 1行月份控制 + 1行星期 + 6行日期 + padding
         self.command = command
         self.anchor = anchor
+        self.month_select_mode = False # 月份选择模式
 
         self.cfg = {
             "fg": kwargs.get("fg", "#1b1b1b"),
@@ -99,12 +100,18 @@ class TinUICalendarPicker:
         self.maxy = self.self.winfo_screenheight()
 
     def _build_calendar_ui(self, width):
+        if self.month_select_mode:
+            self._build_month_select_ui(width)
+        else:
+            self._build_day_select_ui(width)
+
+    def _build_day_select_ui(self, width):
         offset_x = self.scale_value(10)
         offset_y = self.scale_value(10)
 
         # 年月显示
         # 考虑可以使用模板字符串作为参数设置具体显示格式
-        self.title_text = self.bar.add_button2((offset_x,offset_y+self.cell_size//2), minwidth=width-self.cell_size*3, text=f"{self.view_year}-{self.view_month}", fg=self.cfg['buttonfg'], bg=self.cfg['buttonbg'], line=self.cfg['buttonbg'], activefg=self.cfg['buttonactivefg'], activebg=self.cfg['buttonactivebg'], activeline=self.cfg['buttonactivebg'], onfg=self.cfg['buttononfg'], onbg=self.cfg['buttononbg'], online=self.cfg['buttononbg'], font=self.font, command=None, anchor='w')[0]
+        self.title_text = self.bar.add_button2((offset_x,offset_y+self.cell_size//2), minwidth=width-self.cell_size*3, text=f"{self.view_year}-{self.view_month}", fg=self.cfg['buttonfg'], bg=self.cfg['buttonbg'], line=self.cfg['buttonbg'], activefg=self.cfg['buttonactivefg'], activebg=self.cfg['buttonactivebg'], activeline=self.cfg['buttonactivebg'], onfg=self.cfg['buttononfg'], onbg=self.cfg['buttononbg'], online=self.cfg['buttononbg'], font=self.font, command=self._toggle_month_select, anchor='w')[0]
 
         # 右上角按钮 (上一月、下一月)
         btn_y = offset_y + self.cell_size//2
@@ -119,7 +126,7 @@ class TinUICalendarPicker:
         self.bar.add_separate((offset_x, offset_y+self.cell_size+self.scale_value(2)), width=self.cell_size*7, fg=self.cfg['outline'])
 
         # 星期简称栏
-        weekdays = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"] # 之后也可以考虑作为设置显示具体格式，但目前规定一周的开头是周一
+        weekdays = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
         week_y = offset_y + self.cell_size + self.scale_value(5)
         for i, day in enumerate(weekdays):
             self.bar.create_text(
@@ -130,6 +137,80 @@ class TinUICalendarPicker:
         # 日期网格
         self.grid_start_y = week_y + self.cell_size
         self._draw_days(offset_x)
+
+    def _toggle_month_select(self, _):
+        self.month_select_mode = not self.month_select_mode
+        self._redraw_calendar()
+
+    def _redraw_calendar(self):
+        for item in self.bar.find_all():
+            self.bar.delete(item)
+        self._build_calendar_ui(self.width)
+
+    def _build_month_select_ui(self, width):
+        offset_x = self.scale_value(10)
+        offset_y = self.scale_value(10)
+
+        # 年份显示 (不可点击，仅显示)
+        self.bar.create_text((offset_x, offset_y+self.cell_size//2), text=str(self.view_year), fill=self.cfg['buttonfg'], font=self.font, anchor='w')
+
+        # 右上角按钮 (上一年、下一年)
+        btn_y = offset_y + self.cell_size//2
+        btn_w = self.cell_size
+        prev_btn_x = width - btn_w * 2
+        next_btn_x = width - btn_w
+
+        self.bar.add_button2((prev_btn_x,btn_y), icon='\uF090', text='', fg=self.cfg['buttonfg'], bg=self.cfg['buttonbg'], line=self.cfg['buttonbg'], activefg=self.cfg['buttonactivefg'], activebg=self.cfg['buttonactivebg'], activeline=self.cfg['buttonactivebg'], onfg=self.cfg['buttononfg'], onbg=self.cfg['buttononbg'], online=self.cfg['buttononbg'], font=self.segoe_font, command=self._prev_year, anchor='w')
+        self.bar.add_button2((next_btn_x,btn_y), icon='\uF08E', text='', fg=self.cfg['buttonfg'], bg=self.cfg['buttonbg'], line=self.cfg['buttonbg'], activefg=self.cfg['buttonactivefg'], activebg=self.cfg['buttonactivebg'], activeline=self.cfg['buttonactivebg'], onfg=self.cfg['buttononfg'], onbg=self.cfg['buttononbg'], online=self.cfg['buttononbg'], font=self.segoe_font, command=self._next_year, anchor='w')
+
+        # 分割线
+        self.bar.add_separate((offset_x, offset_y+self.cell_size+self.scale_value(2)), width=self.cell_size*7, fg=self.cfg['outline'])
+
+        # 月份网格 (3行 x 4列)
+        months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        grid_start_y = offset_y + self.cell_size + self.scale_value(5)
+        
+        for idx, month in enumerate(months):
+            row = idx // 4
+            col = idx % 4
+            cx = offset_x + self.cell_size * col + self.cell_size/2
+            cy = grid_start_y + self.cell_size * row + self.cell_size/2
+            r = self.cell_size/2
+
+            back = self.bar.create_oval(cx - r, cy - r, cx + r, cy + r, fill=self.cfg['buttonbg'], outline=self.cfg['buttonbg'], width=self.scale_value(1))
+            text = self.bar.create_text((cx, cy), text=month, fill=self.cfg['buttonfg'], font=self.font)
+
+            is_selected = (idx + 1 == self.view_month)
+            if is_selected:
+                self.bar.itemconfig(back, fill=self.cfg['onbg'])
+                self.bar.itemconfig(text, fill=self.cfg['onfg'])
+
+            data = {'items': (back, text), 'back': back, 'text': text, 'month': idx + 1, 'is_sel': is_selected}
+            for item in (back, text):
+                self.bar.tag_bind(item, "<Enter>", lambda _, d=data: self._on_month_enter(d))
+                self.bar.tag_bind(item, "<Leave>", lambda _, d=data: self._on_month_leave(d))
+                self.bar.tag_bind(item, "<Button-1>", lambda _, d=data: self._on_month_click(d))
+
+    def _on_month_enter(self, data):
+        if not data['is_sel']:
+            self.bar.itemconfig(data['back'], fill=self.cfg['buttonactivebg'])
+
+    def _on_month_leave(self, data):
+        if not data['is_sel']:
+            self.bar.itemconfig(data['back'], fill=self.cfg['buttonbg'])
+
+    def _on_month_click(self, data):
+        self.view_month = data['month']
+        self.month_select_mode = False
+        self._redraw_calendar()
+
+    def _prev_year(self, _):
+        self.view_year -= 1
+        self._redraw_calendar()
+
+    def _next_year(self, _):
+        self.view_year += 1
+        self._redraw_calendar()
 
     def _draw_days(self, offset_x):
         # 清除旧的日期元素
@@ -213,20 +294,27 @@ class TinUICalendarPicker:
         self._confirm()
 
     def _prev_month(self, _):
-        if self.view_month == 1:
+        if self.month_select_mode:
             self.view_year -= 1
-            self.view_month = 12
         else:
-            self.view_month -= 1
-        self._update_title_and_days()
+            if self.view_month == 1:
+                self.view_year -= 1
+                self.view_month = 12
+            else:
+                self.view_month -= 1
+        self._redraw_calendar()
 
     def _next_month(self, _):
-        if self.view_month == 12:
+        if self.month_select_mode:
             self.view_year += 1
-            self.view_month = 1
         else:
-            self.view_month += 1
-        self._update_title_and_days()
+            if self.view_month == 12:
+                self.view_year += 1
+                self.view_month = 1
+            else:
+                self.view_month += 1
+        self._redraw_calendar()
+
 
     def _update_title_and_days(self):
         self.bar.itemconfig(self.title_text, text=f"{self.view_year}-{self.view_month}") # 后续同样考虑可设置模板字符串
@@ -267,7 +355,7 @@ class TinUICalendarPicker:
         full_date = f"{self.res_year}-{self.res_month}-{self.res_day}"
         self.self.itemconfig(self.main_text, text=full_date)
         if hasattr(self, 'title_text'):
-            self._update_title_and_days()
+            self._redraw_calendar()
 
 
 if __name__ == "__main__":
