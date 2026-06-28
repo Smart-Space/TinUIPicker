@@ -18,6 +18,7 @@ class TinUICalendarPicker:
         self.segoe_font = Font(family="{Segoe Fluent Icons}", size=self.font.cget("size")-2)
         self.font_width = self.font.measure('30')
         self.cell_size = self.scale_value(15) + self.font_width # 每个日期单元格的大小，考虑字体宽度
+        self.month_cell_size = self.cell_size * 7 / 4 # 每个月份单元格的大小
         self.width = self.cell_size * 7 + self.scale_value(20)
         self.height = self.cell_size * 8 + self.scale_value(20) # 1行月份控制 + 1行星期 + 6行日期 + padding
         self.command = command
@@ -95,6 +96,7 @@ class TinUICalendarPicker:
 
         # 存放当前网格元素的引用，便于刷新时清除
         self.day_elements = []
+        self.month_elements = []
         self.selected_back = None
 
         self._build_calendar_ui()
@@ -169,29 +171,45 @@ class TinUICalendarPicker:
         offset_y = self.scale_value(10)
 
         # 月份网格 (3行 x 4列)
+        self.month_grid_start_y = offset_y + self.cell_size * 7 / 4
+        self._draw_months(offset_x)
+
+    def _draw_months(self, offset_x):
+        for elements in self.month_elements:
+            for item in elements['items']:
+                self.bar.delete(item)
+        self.month_elements.clear()
+
         months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-        grid_start_y = offset_y + self.cell_size + self.scale_value(5)
-        
+        month_radius = self.month_cell_size / 2
+
         for idx, month in enumerate(months):
             row = idx // 4
             col = idx % 4
-            cx = offset_x + self.cell_size * col + self.cell_size/2
-            cy = grid_start_y + self.cell_size * row + self.cell_size/2
-            r = self.cell_size/2
+            self._create_month_cell(row, col, idx + 1, month, offset_x, month_radius)
 
-            back = self.bar.create_oval(cx - r, cy - r, cx + r, cy + r, fill=self.cfg['buttonbg'], outline=self.cfg['buttonbg'], width=self.scale_value(1), tags=self.MONTH_MODE_TAG)
-            text = self.bar.create_text((cx, cy), text=month, fill=self.cfg['buttonfg'], font=self.font, tags=self.MONTH_MODE_TAG)
+    def _create_month_cell(self, row, col, month, month_text, offset_x, month_radius):
+        cx = offset_x + self.month_cell_size * col + self.month_cell_size / 2
+        cy = self.month_grid_start_y + self.month_cell_size * row + self.month_cell_size / 2
 
-            is_selected = (idx + 1 == self.view_month)
-            if is_selected:
-                self.bar.itemconfig(back, fill=self.cfg['onbg'])
-                self.bar.itemconfig(text, fill=self.cfg['onfg'])
+        back = self.bar.create_oval(
+            cx - month_radius, cy - month_radius, cx + month_radius, cy + month_radius,
+            fill=self.cfg['buttonbg'], outline=self.cfg['buttonbg'], width=self.scale_value(1), tags=self.MONTH_MODE_TAG
+        )
+        text = self.bar.create_text((cx, cy), text=month_text, fill=self.cfg['buttonfg'], font=self.font, tags=self.MONTH_MODE_TAG)
 
-            data = {'items': (back, text), 'back': back, 'text': text, 'month': idx + 1, 'is_sel': is_selected}
-            for item in (back, text):
-                self.bar.tag_bind(item, "<Enter>", lambda _, d=data: self._on_month_enter(d))
-                self.bar.tag_bind(item, "<Leave>", lambda _, d=data: self._on_month_leave(d))
-                self.bar.tag_bind(item, "<Button-1>", lambda _, d=data: self._on_month_click(d))
+        is_selected = (month == self.view_month)
+        if is_selected:
+            self.bar.itemconfig(back, fill=self.cfg['onbg'])
+            self.bar.itemconfig(text, fill=self.cfg['onfg'])
+
+        data = {'items': (back, text), 'back': back, 'text': text, 'month': month, 'is_sel': is_selected}
+        for item in (back, text):
+            self.bar.tag_bind(item, "<Enter>", lambda _, d=data: self._on_month_enter(d))
+            self.bar.tag_bind(item, "<Leave>", lambda _, d=data: self._on_month_leave(d))
+            self.bar.tag_bind(item, "<Button-1>", lambda _, d=data: self._on_month_click(d))
+
+        self.month_elements.append(data)
 
     def _on_month_enter(self, data):
         if not data['is_sel']:
