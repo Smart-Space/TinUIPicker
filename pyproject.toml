@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tinuipicker"
-version = "1.7.1"
+version = "1.8.0"
 description = "tinui时间与日期滚动选择器"
 readme = "README.md"
 license = "Apache-2.0"
